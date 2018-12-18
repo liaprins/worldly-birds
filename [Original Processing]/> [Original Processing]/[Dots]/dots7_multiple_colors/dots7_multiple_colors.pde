@@ -1,0 +1,281 @@
+/*
+Dots to show up on command according to the date serial number
+
+PROBLEM: It keeps running out of memory (at #331)....
+*/
+
+/*
+NOTES:
+
+_Typefaces must be in your data directory, .vlw format. Use Tools>Create Font to convert faces to .vlw
+
+_When possible, set variables in setup or outside of anything (globally) as this is more efficient than in the beginning of draw!
+
+*/
+
+
+//  COMMENTS LEGEND:
+
+//  %%%%%%%%%%%% Very important comment!
+
+//---------------------------------------------------------------------------  separates void setup from void draw, etc.
+    
+//.........................................................................  separates (very) main ideas within void setup, etc.    
+            
+/* v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
+These encapsulate temporarily commented out sections for experimenting.
+^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^ */
+
+
+
+
+//  introducing the idea that there will be an Excel spreadsheet for the program to refer to
+ArrayList<Birds> birds;
+
+//  for the click and hover states
+boolean hover = false;
+boolean click = false;
+
+float dot_size = 4;
+int dot_alpha = 230;
+
+//  counter keeping track of time
+int counter = 1;
+float starttime = millis();
+int counter_duration = 365;
+
+//typography
+int monthTextSize = 50;
+
+color shearwater_color = color(255,0,0,  dot_alpha);
+color penguin_color = color(0,0,255,  dot_alpha);
+
+//  %%%TRIAL 3.5%%%%
+//String line = ",";
+
+//  %%%TRIAL 1.1 & 1.2 %%%%
+//  String shearwater_color_code = "20_shearwater";  // reinstate once the rest of the code is figured out
+
+/* v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
+//  PImage to hold the background image
+PImage background;
+^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^ */
+
+
+//--------------------------------------------
+
+
+void setup(){
+  size(1250,625);
+  frameRate(60);
+      
+  //  so that nothing will have a stroke unless it is called
+  noStroke();
+  
+  //  typography
+  PFont font; 
+  font = loadFont("Gotham_Light_100.vlw");
+  //  we will list typeface attributes throughout in this order: font, monthTextSize.....(?)  
+  textFont(font, monthTextSize); 
+  
+  //load the data from the Excel spreadsheet
+  birds = new ArrayList<Birds>();
+    try {  
+      
+      //create reader to read file
+      BufferedReader reader = createReader("0_sightings_test.csv");
+      String line = ",";
+      
+      //keep getting the data until there is no more left, then stop (null)
+      while((line = reader.readLine()) != null){
+        
+        //if the line sharts with "#" do not read it (the line is serving like a comment)
+        if(line.charAt(0) == '#' ) continue; 
+        
+        //  TRIAL 4
+        /* v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
+        char c1 = line.charAt(0);
+        if(c1 == '2' ){        
+          fill(shearwater_color);
+        }  //  close if        
+        ^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^ */
+      
+        //make anything on a line between commas (or columns on Excel) its own entity (used to be called "pieces", I re-named)
+        String entity[] = split(line, ",");
+        
+        //parses apart the data within Excel columns ("entity"s) and adds them to something (I think?)
+        birds.add(new Birds(entity[0], entity[1], entity[2], entity[3], entity[4]));
+
+      }  //close ...?
+    }  //close ...?
+    
+    catch (IOException e) {
+      e.printStackTrace();
+    }  //close ...?
+  }  //close ...?
+
+
+//--------------------------------------------
+
+
+void draw(){ 
+  
+  //  conversion between screen pixel width and latitude...
+  //  screen height in pixels / 180 = conversion rate (in this case 3.47) ((or screenwidth/2 which is the same number) / 180) will get the same result)
+  //  just make sure the lng is negative!
+  float map_lat = 3.47;
+  float map_lng = -3.47;
+  
+  //  this is to do with the speed of the handle rotating...HELP! I don't remember why!
+  if(millis() > starttime+1.5*100){ 
+    
+    //  Trying it without a background image this time to see if it uses less memory.
+    /* v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
+    //  load the background image. Source: wikipedia
+    background = loadImage("world_map.png"); 
+    //  draw the background image
+    image(background,0,0);
+    ^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^ */    
+    background(255,255,255);
+
+    //  move 0,0 to the center of the screen: important for my self-mapping!
+    translate(width/2, height/2); 
+  
+    /*  //I think we don't need to have this...but leave it in until this can be verified!
+    //  refers to the number of rows in the Excel spreadsheet, a.k.a. the number of sightings for a bird
+    //  %%%  //  int spreadsheet_rows = birds.size();
+    */
+    
+    //declare the string to be used in the text, so it knows what it is when we call it on the next line below
+    String s = String.valueOf(counter);  
+    
+    //  counter (a.k.a. counter=counter+1) to make it actually count!
+    ++counter; 
+    
+    //  %%%%%%%%%%%%  to make it keep cycling after it gets to the top; problem solved by using ">=" (greater than OR EQUAL!)
+    if(counter>counter_duration){
+      counter=1; 
+    }  //  close if
+    
+    //this is the text showing the value of the counter (not the date)
+    textAlign(CENTER);
+    textSize(50);
+    fill(0,0,0);    
+    text(s, 0,0); 
+    
+    //  for loop to iterate through the external file of total bird sightings
+    for(int sighting = 0; sighting<birds.size(); ++sighting){ 
+     
+      //  casting to make integers out of the Strings of data from the Excel sheet 
+      //  NOTE: 'date_projection' refers to the on-screen representation of the date, to be coordinated with the counter, 'date' refers to the string in the Excel sheet with the date.
+      float x_position = float(birds.get(sighting).lng);
+      float y_position = float(birds.get(sighting).lat);
+      int date_projection = int(birds.get(sighting).date); 
+      
+      //  TRIAL 2; tried with both = and with ==
+      /* v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
+      color dot_color == color(birds.get(sighting).hex); 
+      ^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^ */
+     
+      //  If the value of the counter matches the value of the serial date in the Excel sheet, make a dot as specified by that line in the Excel sheet
+      if(counter==date_projection){
+     
+        
+        //  TRIAL 1.1 works, but it isn't set up to read from the external file
+        //  Had to read about String method on Processing.org or I never would have gotten this!
+        /* v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
+        //  if statement to match up bird species to its designated color
+        String shearwater_color_code = "20_shearwater";  //  this works as a global variable outside of setup, add it there later
+        if(shearwater_color_code.equals("20_shearwater")){
+        fill(0,125,125,  dot_alpha);  //teal-ish
+        } 
+        else{fill(0,  dot_alpha);
+        } 
+        ^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^ */
+
+
+
+        //  TRIAL 1.2
+        //  Had to read about String method on Processing.org or I never would have gotten this!
+//        /* v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
+        //  if statement to match up bird species to its designated color
+        String shearwater_color_code = "shearwater";   //  this works as a global variable outside of setup, add it there later
+        if(shearwater_color_code.equals(birds.get(sighting).species)){
+        fill(0,125,50,  dot_alpha);  //green
+        } 
+//        else{fill(0,  dot_alpha);
+//        }
+       
+        
+        String penguin_color_code = "penguin";   //  this works as a global variable outside of setup, add it there later
+        if(penguin_color_code.equals(birds.get(sighting).species)){
+        fill(175,50,0,  dot_alpha);  //red
+        } 
+//        else{fill(0,  dot_alpha);
+//        } 
+//        ^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^ */
+
+
+
+
+        //  TRIAL 2
+        /* v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
+        fill(shearwater_color);
+        ^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^ */
+        
+        
+        //  TRIAL 3 always returns the else color (aqua); println() reveals it is only reading commas because line is defined as String "," before void setup
+        /* v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v
+        char c1 = line.charAt(0);
+        if(c1 == '2'){         
+          fill(255,0,0);
+        }  //  close if
+
+        else{
+          fill(0,255,255);
+        }  //  close else 
+ 
+        println(c1);       
+        ^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^-^ */
+        
+        
+        
+//  %%% TURN OFF WHILE TESTING OTHER METHODS %%%        fill(255,0,0,  100);
+
+        
+        //  array of dots
+        ellipse(x_position*map_lat, y_position*map_lng,  dot_size,dot_size);
+        
+      }  //  close if(date_projection)
+            
+    }  // close for loop, sighting
+  
+  //  without this, the counter won't listen to the speeds set earlier
+  starttime = millis();
+
+  }  //  close if(millis), for counter
+
+}  // close void draw
+
+
+//--------------------------------------------   
+
+
+class Birds{
+  
+  //this declares that the data is going to be in Strings now (I think...?)
+  String species;
+  String lat;
+  String lng;
+  String date;
+//  %%%TRIAL 2%%%    String hex;
+  
+  //identifying the existing strings and naming the ones I want to use
+  Birds(String s1, String s2, String s3, String s4, String s5 /*, String s6*/){ 
+    species = s1;
+    lat = s2; 
+    lng = s3;
+    date = s5;
+//  %%%TRIAL 2%%%    hex = s6;
+  }
+}  //close the class
