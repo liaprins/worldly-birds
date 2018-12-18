@@ -1,0 +1,11 @@
+#r,g,b
+125,0,0
+2011,Adele,Rolling In The Deep
+2010,Ke$ha,TiK ToK
+2009,The Black Eyed Peas,Boom Boom Pow
+2008,Flo-Rida feat. T-Pain,Low
+2007,Beyonce,Irreplaceable
+2006,Daniel Powter,Bad Day
+2005,Mariah Carey,We Belong Together
+2004,Usher feat. Lil Jon and Ludacris,Yeah!
+2003,50 Cent,In Da Club
